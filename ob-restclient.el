@@ -59,6 +59,9 @@ This function is called by `org-babel-execute-src-block'"
           (restclient-same-buffer-response t)
           (restclient-response-body-only (org-babel-restclient--should-hide-headers-p params))
           (restclient-same-buffer-response-name (buffer-name))
+          ;; The latest version of restclient puts the result buffer into view mode.
+          ;; This prevents us from wrapping the result, so we must hook in and exit view-mode.
+          (restclient-response-loaded-hook 'org-babel-restclient--maybe-exit-view-mode)
 	  (raw-only (org-babel-restclient--raw-payload-p params))
 	  (suppress-response-buffer (fboundp #'restclient-http-send-current-suppress-response-buffer))
           (display-buffer-alist
@@ -174,6 +177,10 @@ This function is called by `org-babel-execute-src-block'"
     (when result-type
       (and (not (org-babel-restclient--should-hide-headers-p params))
            (string-match "file" result-type)))))
+
+(defun org-babel-restclient--maybe-exit-view-mode ()
+  (when view-mode
+    (view-mode-exit)))
 
 (provide 'ob-restclient)
 ;;; ob-restclient.el ends here
